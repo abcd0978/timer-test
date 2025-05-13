@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>ms 타이머 with 원 위를 도는 작은 원 (스페이스바 지원)</title>
+  <style>
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f5f7fa;
+      flex-direction: column;
+      gap: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .timer-wrapper {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dot {
+      position: absolute;
+      width: 24px; height: 24px;
+      background: #3498db;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #3498db88;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      pointer-events: none;
+    }
+    #timer {
+      font-size: 2.5em;
+      color: #333;
+      z-index: 1;
+      min-width: 100px;
+      text-align: center;
+      user-select: none;
+      padding: 0.1em 0.5em;
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 0.5em 1.2em;
+      font-size: 1em;
+      border: none;
+      border-radius: 5px;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:disabled {
+      background-color: #a0c4e8;
+      cursor: not-allowed;
+    }
+    button:hover:not(:disabled) {
+      background-color: #217dbb;
+    }
+  </style>
+</head>
+<body>
+  <div class="timer-wrapper">
+    <div class="big-circle"></div>
+    <div class="dot" id="dot"></div>
+    <span id="timer">0.000</span>
+  </div>
+  <div class="buttons">
+    <button id="startBtn">시작</button>
+    <button id="stopBtn" disabled>중지</button>
+    <button id="resetBtn">초기화</button>
+  </div>
+
+  <script>
+    const timerEl = document.getElementById('timer');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const dot = document.getElementById('dot');
+
+    let startTime = 0;
+    let elapsedBeforePause = 0;
+    let animationFrameId = null;
+    let running = false;
+
+    let lastRotateTime = 0;
+    let angle = 0; // 현재 각도 (degree)
+    const speed = 180; // 1초에 180도 회전 (2초에 한 바퀴)
+
+    // 원의 중심과 반지름
+    const centerX = 90; // timer-wrapper 내 big-circle 중심 (180/2)
+    const centerY = 90;
+    const radius = 80; // 점이 도는 반지름 (big-circle의 반지름 - dot의 반지름)
+
+    function update() {
+      const now = performance.now();
+      // 타이머
+      const elapsed = now - startTime + elapsedBeforePause;
+      timerEl.textContent = (elapsed / 1000).toFixed(3);
+      // 각도 계산
+      const delta = now - lastRotateTime;
+      angle = (angle + speed * (delta / 1000)) % 360;
+      lastRotateTime = now;
+      // 점 위치 계산
+      const rad = angle * Math.PI / 180;
+      const dotX = centerX + radius * Math.cos(rad - Math.PI/2); // 12시 방향에서 출발
+      const dotY = centerY + radius * Math.sin(rad - Math.PI/2);
+      dot.style.left = `${dotX}px`;
+      dot.style.top = `${dotY}px`;
+      animationFrameId = requestAnimationFrame(update);
+    }
+
+    function resetTimer() {
+      running = false;
+      cancelAnimationFrame(animationFrameId);
+      elapsedBeforePause = 0;
+      timerEl.textContent = "0.000";
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      angle = 0;
+      // 점을 12시 방향에 위치
+      const rad = angle * Math.PI / 180;
+      const dotX = centerX + radius * Math.cos(rad - Math.PI/2);
+      const dotY = centerY + radius * Math.sin(rad - Math.PI/2);
+      dot.style.left = `${dotX}px`;
+      dot.style.top = `${dotY}px`;
+    }
+
+    function startTimer() {
+      if (running) return;
+      running = true;
+      startTime = performance.now();
+      lastRotateTime = startTime;
+      animationFrameId = requestAnimationFrame(update);
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+    }
+
+    function stopTimer() {
+      if (!running) return;
+      running = false;
+      cancelAnimationFrame(animationFrameId);
+      elapsedBeforePause += performance.now() - startTime;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    }
+
+    startBtn.addEventListener('click', startTimer);
+    stopBtn.addEventListener('click', stopTimer);
+    resetBtn.addEventListener('click', resetTimer);
+
+    window.addEventListener('keydown', (event) => {
+      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.isContentEditable) return;
+      if (event.code === "Space") {
+        event.preventDefault(); // 스크롤 방지
+        if (running) {
+          stopTimer();
+        } else {
+          startTimer();
+        }
+      }
+    });
+
+    // 페이지 로드시 점 위치 초기화
+    resetTimer();
+  </script>
+</body>
+</html>
