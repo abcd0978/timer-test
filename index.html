@@ -23,6 +23,20 @@
       justify-content: center;
     }
 
+    /* 궤적(점선 원) 스타일 추가 */
+    .trajectory {
+      position: absolute;
+      width: 160px; /* 2*80 (radius) */
+      height: 160px;
+      border: 2px dashed #3498db88;
+      border-radius: 50%;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
     .dot {
       position: absolute;
       width: 24px; height: 24px;
@@ -68,6 +82,7 @@
 </head>
 <body>
   <div class="timer-wrapper">
+    <div class="trajectory"></div> <!-- 궤적 원 추가 -->
     <div class="big-circle"></div>
     <div class="dot" id="dot"></div>
     <span id="timer">0.000</span>
